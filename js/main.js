@@ -56,4 +56,3 @@ const photos = Array.from({length: 25}).map((value, index) => ({
 // eslint-disable-next-line no-console
 console.log(photos);
 
-
