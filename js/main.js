@@ -1,4 +1,6 @@
-import { faker } from 'https://cdn.skypack.dev/@faker-js/faker';
+import {faker} from '@faker-js/faker';
+import './utils.js';
+import './data.js';
 
 function OutOfRangeException(message) {
   this.message = message;
@@ -39,18 +41,22 @@ const MESSAGES = [
 ];
 
 let commentIdx = 1;
+
+const createComment = () => ({
+  id: commentIdx++,
+  avatar: `img/avatar-${getRandomPositiveInteger(1, 6)}.svg`,
+  message: getRandomPositiveInteger(1, 2) === 1 ? MESSAGES[getRandomPositiveInteger(0, MESSAGES.length - 1)] :
+    `${MESSAGES[getRandomPositiveInteger(0, MESSAGES.length - 1)]} ${MESSAGES[getRandomPositiveInteger(0, MESSAGES.length - 1)]}`,
+  name: faker.name.firstName(),
+});
+
 const photos = Array.from({length: 25}).map((value, index) => ({
-  id: ++index,
-  url: `photos/${index}.jpg`,
+  id: index + 1,
+  url: `photos/${index + 1}.jpg`,
   description: faker.lorem.sentences(getRandomPositiveInteger(1, 5)),
   likes: getRandomPositiveInteger(15, 200),
-  comments: Array.from({length: getRandomPositiveInteger(0, 15)}).map(() => ({
-    id: commentIdx++,
-    avatar: `img/avatar-${getRandomPositiveInteger(1, 6)}.svg`,
-    message: getRandomPositiveInteger(1, 2) === 1 ? MESSAGES[getRandomPositiveInteger(0, 5)] :
-      `${MESSAGES[getRandomPositiveInteger(0, 5)]} ${MESSAGES[getRandomPositiveInteger(0, 5)]}`,
-    name: faker.name.firstName(),
-  })),
+  comments: Array.from({length: getRandomPositiveInteger(0, 15)}).map(() =>
+    createComment()),
 }));
 
 // eslint-disable-next-line no-console
