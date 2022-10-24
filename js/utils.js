@@ -27,4 +27,6 @@ const checkStringLength = (string, maxLength) => string.length <= maxLength;
 
 checkStringLength('abcde', 4);
 
-export {getRandomPositiveInteger, checkStringLength};
+const isEscKey = (keyCode) => keyCode === 'Escape';
+
+export {getRandomPositiveInteger, checkStringLength, isEscKey};
