@@ -15,6 +15,7 @@ const commentTemplate = document.querySelector('#comment')
   .content
   .querySelector('.social__comment');
 
+const LOADED_COMMENTS_NUMBER = 5;
 let picComments;
 let loadCounter = 0;
 
@@ -29,7 +30,7 @@ const renderComment = (comment) => {
 };
 
 const onLoadMoreButton = () => {
-  for (let i = loadCounter; i < loadCounter + 5; i++) {
+  for (let i = loadCounter; i < loadCounter + LOADED_COMMENTS_NUMBER; i++) {
     const allComments = ` из ${picComments.length} комментариев`;
     if (i === picComments.length - 1) {
       commentsLoader.classList.add('hidden');
@@ -46,7 +47,7 @@ const onLoadMoreButton = () => {
 
 const renderPartOfComments = () => {
   const allComments = ` из ${picComments.length} комментариев`;
-  const commentsNumber = picComments.length < 6 ? picComments.length : 5;
+  const commentsNumber = picComments.length < LOADED_COMMENTS_NUMBER - 1 ? picComments.length : LOADED_COMMENTS_NUMBER;
   commentsCounterOnPic.textContent = `${commentsNumber}${allComments}`;
   for (let i = 0; i < commentsNumber; i++) {
     const comment = renderComment(picComments[i]);
@@ -63,6 +64,7 @@ const closePictureModal = () => {
   commentsLoader.classList.add('hidden');
 
   commentsLoader.removeEventListener('click', onLoadMoreButton);
+  removeEventListenerModalEscKeydown();
 };
 
 const onPictureModalKeydown = (evt) => {
@@ -74,6 +76,10 @@ const onPictureModalKeydown = (evt) => {
 const onPictureModalCloseClick = () => {
   closePictureModal();
 };
+
+function removeEventListenerModalEscKeydown() {
+  document.removeEventListener('keydown', onPictureModalKeydown);
+}
 
 const openPictureModal = ({url, likes, comments, description}) => {
   imageElement.src = url;
@@ -91,7 +97,7 @@ const openPictureModal = ({url, likes, comments, description}) => {
   loadCounter = 0;
   picComments = comments;
 
-  if (picComments.length <= 5) {
+  if (picComments.length <= LOADED_COMMENTS_NUMBER) {
     commentsLoader.classList.add('hidden');
   } else {
     commentsLoader.classList.remove('hidden');
