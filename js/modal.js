@@ -1,5 +1,7 @@
 import {isEscKey} from './utils.js';
 
+const LOADED_COMMENTS_NUMBER = 5;
+
 const pictureModalElement = document.querySelector('.big-picture');
 const commentCounterElement = pictureModalElement.querySelector('.comments-count');
 const imageElement = pictureModalElement.querySelector('.big-picture__img img');
@@ -15,7 +17,6 @@ const commentTemplate = document.querySelector('#comment')
   .content
   .querySelector('.social__comment');
 
-const LOADED_COMMENTS_NUMBER = 5;
 let picComments;
 let loadCounter = 0;
 
@@ -47,7 +48,7 @@ const onLoadMoreButton = () => {
 
 const renderPartOfComments = () => {
   const allComments = ` из ${picComments.length} комментариев`;
-  const commentsNumber = picComments.length < LOADED_COMMENTS_NUMBER - 1 ? picComments.length : LOADED_COMMENTS_NUMBER;
+  const commentsNumber = picComments.length <= LOADED_COMMENTS_NUMBER - 1 ? picComments.length : LOADED_COMMENTS_NUMBER;
   commentsCounterOnPic.textContent = `${commentsNumber}${allComments}`;
   for (let i = 0; i < commentsNumber; i++) {
     const comment = renderComment(picComments[i]);
