@@ -1,4 +1,15 @@
 import {isEscKey} from './utils.js';
+import {sendData} from './api.js';
+
+const MAX_HASHTAGS_NUMBER = 5;
+const MAX_COMMENT_LENGTH = 140;
+
+const documentBody = document.querySelector('body');
+
+const successfulSubmission = document.querySelector('#success').content.querySelector('.success');
+const errSubmission = document.querySelector('#error').content.querySelector('.error');
+const successButton = successfulSubmission.querySelector('.success__button');
+const errorButton = errSubmission.querySelector('.error__button');
 
 const uploadImage = document.querySelector('#upload-file');
 const overlayImage = document.querySelector('.img-upload__overlay');
@@ -7,7 +18,7 @@ const closeButton = document.querySelector('#upload-cancel');
 const form = document.querySelector('.img-upload__form');
 const hashtagInput = form.querySelector('.text__hashtags');
 const commentInput = form.querySelector('.text__description');
-//const submitButton = form.querySelector('.img-upload__submit');
+const submitButton = form.querySelector('.img-upload__submit');
 
 const zoomOutButton = overlayImage.querySelector('.scale__control--smaller');
 const zoomInButton = overlayImage.querySelector('.scale__control--bigger');
@@ -19,9 +30,6 @@ const slider = overlayImage.querySelector('.effect-level__slider');
 const effectLevelInput = overlayImage.querySelector('.effect-level__value');
 const sliderField = overlayImage.querySelector('.img-upload__effect-level');
 let selectedEffect;
-
-const MAX_HASHTAGS_NUMBER = 5;
-const MAX_COMMENT_LENGTH = 140;
 
 const pristine = new Pristine(form, {
   classTo: 'text',
@@ -55,63 +63,61 @@ const onZoomOutButtonClick = (evt) => {
   changeScale(evt);
 };
 
+const EFFECTS = {
+  chrome: {
+    min: 0,
+    max: 1,
+    step: 0.1,
+    style: 'grayscale',
+    unit: '',
+  },
+  marvin: {
+    min: 0,
+    max: 100,
+    step: 1,
+    style: 'invert',
+    unit: '%',
+  },
+  sepia: {
+    min: 0,
+    max: 1,
+    step: 0.1,
+    style: 'sepia',
+    unit: '',
+  },
+  phobos: {
+    min: 0,
+    max: 3,
+    step: 0.1,
+    style: 'blur',
+    unit: 'px',
+  },
+  heat: {
+    min: 1,
+    max: 3,
+    step: 0.1,
+    style: 'brightness',
+    unit: '',
+  }
+};
+
 const applyEffectOnImage = (evt) => {
-  selectedEffect = evt.target.id;
-  let currentMin;
-  let currentMax;
-  let currentStart;
-  let currentStep;
-  switch (selectedEffect) {
-    case 'effect-none':
-      currentMin = 0;
-      currentMax = 100;
-      currentStart = 100;
-      currentStep = 1;
-      break;
-    case 'effect-chrome':
-      currentMin = 0;
-      currentMax = 1;
-      currentStep = 0.1;
-      currentStart = 1;
-      break;
-    case 'effect-sepia':
-      currentMin = 0;
-      currentMax = 1;
-      currentStep = 0.1;
-      currentStart = 1;
-      break;
-    case 'effect-marvin':
-      currentMin = 0;
-      currentMax = 100;
-      currentStep = 1;
-      currentStart = 100;
-      break;
-    case 'effect-phobos':
-      currentMin = 0;
-      currentMax = 3;
-      currentStep = 0.1;
-      currentStart = 3;
-      break;
-    case 'effect-heat':
-      currentMin = 1;
-      currentMax = 3;
-      currentStep = 0.1;
-      currentStart = 3;
-      break;
-  }
-  slider.noUiSlider.updateOptions({
-    range: {
-      min: currentMin,
-      max: currentMax
-    },
-    start: currentStart,
-    step: currentStep
-  });
-  if (selectedEffect !== 'effect-none') {
-    sliderField.classList.remove('hidden');
-  } else {
+  selectedEffect = evt.target.value;
+  const effectConfig = EFFECTS[selectedEffect];
+  if (!effectConfig) {
     sliderField.classList.add('hidden');
+    return;
   }
+  sliderField.classList.remove('hidden');
+
+  const {min, max, step} = effectConfig;
+
+  slider.noUiSlider.updateOptions({
+    range: {min, max},
+    start: max,
+    step,
+  });
+
   previewImage.className = 'img-upload__preview';
   const effectsPreview = evt.target.parentNode.querySelector('.effects__preview');
   previewImage.classList.add(effectsPreview.getAttribute('class').split('  ')[1]);
@@ -124,25 +130,10 @@ const onEffectsChange = (evt) => {
 const changeEffectIntensity = () => {
   const sliderValue = slider.noUiSlider.get();
   effectLevelInput.value = sliderValue;
-  let filter;
-  switch (selectedEffect) {
-    case 'effect-chrome':
-      filter = `grayscale(${sliderValue})`;
-      break;
-    case 'effect-sepia':
-      filter = `sepia(${sliderValue})`;
-      break;
-    case 'effect-marvin':
-      filter = `invert(${sliderValue}%)`;
-      break;
-    case 'effect-phobos':
-      filter = `blur(${sliderValue}px)`;
-      break;
-    case 'effect-heat':
-      filter = `brightness(${sliderValue})`;
-      break;
-  }
-  previewImage.style.filter = selectedEffect === 'effect-none' ? '' : filter;
+  const effectConfig = EFFECTS[selectedEffect];
+  previewImage.style.filter = effectConfig
+    ? `${effectConfig.style}(${sliderValue}${effectConfig.unit})`
+    : '';
 };
 
 const onSliderUpdate = () => {
@@ -172,13 +163,63 @@ const onCloseButtonClick = () => {
 };
 
 const onOverlayImageEscKeydown = (evt) => {
-  if (isEscKey(evt.key) && evt.target !== hashtagInput && evt.target !== commentInput) {
+  if (isEscKey(evt.key) && evt.target !== hashtagInput && evt.target !== commentInput
+    && !documentBody.contains(errSubmission)) {
     closeOverlayImage();
   }
 };
 
 function removeEventListenerImageEscKeydown() {
   document.removeEventListener('keydown', onOverlayImageEscKeydown);
+}
+
+const disableSubmitButton = () => {
+  submitButton.disabled = true;
+  submitButton.textContent = 'Идет публикация...';
+};
+
+const enableSubmitButton = () => {
+  submitButton.disabled = false;
+  submitButton.textContent = 'Опубликовать';
+};
+
+const closeMessages = () => {
+  if (documentBody.contains(successfulSubmission)) {
+    documentBody.removeChild(successfulSubmission);
+  }
+  if (documentBody.contains(errSubmission)) {
+    overlayImage.classList.remove('hidden');
+    documentBody.removeChild(errSubmission);
+  }
+  removeEventListenersMsg();
+};
+
+const onCloseSuccessMsgClick = (evt) => {
+  if (evt.target === successfulSubmission) {
+    closeMessages();
+  }
+};
+
+const onCloseErrorMsgClick = (evt) => {
+  if (evt.target === errSubmission) {
+    closeMessages();
+  }
+};
+
+const onErrorMsgEscKeydown = (evt) => {
+  if (isEscKey(evt.key)) {
+    closeMessages();
+  }
+};
+
+function removeEventListenersMsg() {
+  document.removeEventListener('keydown', onErrorMsgEscKeydown);
+
+  document.removeEventListener('click', onCloseSuccessMsgClick);
+  successButton.removeEventListener('click', closeMessages);
+
+  document.removeEventListener('click', onCloseErrorMsgClick);
+  errorButton.removeEventListener('click', closeMessages);
 }
 
 uploadImage.addEventListener('change', () => {
@@ -252,7 +293,8 @@ pristine.addValidator(
 pristine.addValidator(
   hashtagInput,
   (value) => hasNoDuplicates(value),
-  'Хэштэги должны быть уникальными'
+  'Хэштэги должны быть уникальными',
+  2
 );
 
 pristine.addValidator(
@@ -264,13 +306,34 @@ pristine.addValidator(
 
 pristine.addValidator(
   commentInput,
-  validateComment,
+  (value) => validateComment(value),
   'Длина комментария не должна превышать 140 символов'
 );
 
 form.addEventListener('submit', (evt) => {
+  evt.preventDefault();
   const isValidForm = pristine.validate();
-  if (!isValidForm) {
-    evt.preventDefault();
+
+  if (isValidForm) {
+    disableSubmitButton();
+    sendData(
+      () => {
+        closeOverlayImage();
+        enableSubmitButton();
+        successButton.addEventListener('click', closeMessages);
+        document.addEventListener('keydown', onErrorMsgEscKeydown);
+        document.addEventListener('click', onCloseSuccessMsgClick);
+        documentBody.appendChild(successfulSubmission);
+      },
+      () => {
+        overlayImage.classList.add('hidden');
+        enableSubmitButton();
+        errorButton.addEventListener('click', closeMessages);
+        document.addEventListener('keydown', onErrorMsgEscKeydown);
+        document.addEventListener('click', onCloseErrorMsgClick);
+        documentBody.appendChild(errSubmission);
+      },
+      new FormData(evt.target),
+    );
   }
 });

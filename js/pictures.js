@@ -1,4 +1,3 @@
-import {createPhotos} from './data.js';
 import {openPictureModal} from './modal.js';
 
 const picturesListElem = document.querySelector('.pictures');
@@ -20,8 +19,7 @@ const appendPicture = (picture) => {
   picturesFragment.appendChild(pictureElement);
 };
 
-const renderPictures = () => {
-  const photos = createPhotos();
+const renderPictures = (photos) => {
   photos.forEach(appendPicture);
   picturesListElem.appendChild(picturesFragment);
 
