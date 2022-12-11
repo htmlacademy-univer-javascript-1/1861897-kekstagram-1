@@ -1,4 +1,4 @@
-import { faker } from 'https://cdn.skypack.dev/@faker-js/faker';
+import {faker} from './main.js';
 import {getRandomPositiveInteger} from './utils.js';
 
 const MESSAGES = [
