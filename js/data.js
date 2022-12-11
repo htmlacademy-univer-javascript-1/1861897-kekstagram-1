@@ -1,6 +1,8 @@
 import {faker} from './main.js';
 import {getRandomPositiveInteger} from './utils.js';
 
+const FILE_TYPES = ['gif', 'jpg', 'jpeg', 'png'];
+
 const MESSAGES = [
   'Всё отлично!',
   'В целом всё неплохо. Но не всё.',
@@ -29,5 +31,5 @@ const createPhotos = () => Array.from({length: 25}).map((value, index) => ({
     createComment()),
 }));
 
-export {createPhotos};
+export {createPhotos, FILE_TYPES};
 

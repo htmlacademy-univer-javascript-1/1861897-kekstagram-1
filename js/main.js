@@ -1,6 +1,7 @@
 export { faker } from 'https://cdn.skypack.dev/@faker-js/faker';
 import {initialRenderPictures} from './pictures.js';
 import './image-upload.js';
+import './choose-file.js';
 import {getData} from './api.js';
 import {showAlert} from './utils.js';
 
